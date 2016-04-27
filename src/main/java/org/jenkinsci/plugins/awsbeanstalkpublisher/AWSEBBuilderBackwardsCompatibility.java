@@ -59,21 +59,21 @@ public abstract class AWSEBBuilderBackwardsCompatibility extends Builder impleme
     
     /**
      * Credentials Name from the global config
-     * @deprecated
+     * @deprecated Duplicate
      */
     private transient AWSEBCredentials credentials;
 
     /**
      * Bucket Name
      * 
-     * @deprecated
+     * @deprecated Duplicate
      */
     protected transient String bucketName;
 
     /**
      * Key Format
      * 
-     * @deprecated
+     * @deprecated Duplicate
      */
     protected transient String keyPrefix;
 
@@ -101,21 +101,21 @@ public abstract class AWSEBBuilderBackwardsCompatibility extends Builder impleme
     /**
      * AWS Region
      * 
-     * @deprecated
+     * @deprecated Duplicate
      */
     protected transient Regions awsRegion;
 
     /**
      * Application Name
      * 
-     * @deprecated
+     * @deprecated Duplicate
      */
     protected transient String applicationName;
 
     /**
      * Environment Name
      * 
-     * @deprecated
+     * @deprecated Duplicate
      */
     protected transient List<String> environments;
 
