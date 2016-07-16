@@ -29,6 +29,7 @@ public class AWSEBS3Uploader {
     
     private final String keyPrefix;
     private final String bucketName;
+    private final String bucketRegion;
     private final String includes;
     private final String excludes;
     private final String rootObject;
@@ -57,6 +58,7 @@ public class AWSEBS3Uploader {
         this.versionLabel = AWSEBUtils.getValue(build, listener, versionLabel);
         this.keyPrefix = AWSEBUtils.getValue(build, listener, s3Setup.getKeyPrefix());
         this.bucketName = AWSEBUtils.getValue(build, listener, s3Setup.getBucketName());
+        this.bucketRegion = AWSEBUtils.getValue(build, listener, s3Setup.getBucketRegion());
         this.includes = AWSEBUtils.getValue(build, listener, s3Setup.getIncludes());
         this.excludes = AWSEBUtils.getValue(build, listener, s3Setup.getExcludes());
         this.rootObject = AWSEBUtils.getValue(build, listener, s3Setup.getRootObject());
@@ -71,7 +73,11 @@ public class AWSEBS3Uploader {
 
     public void uploadArchive(AWSElasticBeanstalk awseb) throws Exception {
         if (s3 == null) {
-            s3 = AWSEBUtils.getS3(credentials, awsRegion);
+            // Check whether we should use the env region or the bucket one.
+            if(this.bucketRegion.isEmpty())
+                s3 = AWSEBUtils.getS3(credentials, awsRegion);
+            else
+                s3 = AWSEBUtils.getS3(credentials, Regions.fromName(bucketRegion));
         }
 
         objectKey = AWSEBUtils.formatPath("%s/%s-%s.zip", keyPrefix, applicationName, versionLabel);

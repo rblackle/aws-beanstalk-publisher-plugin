@@ -13,8 +13,9 @@ public class AWSEBS3Setup extends AWSEBSetup {
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
     @DataBoundConstructor
-    public AWSEBS3Setup(String bucketName, String keyPrefix, String rootObject, String includes, String excludes, Boolean overwriteExistingFile) {
+    public AWSEBS3Setup(String bucketName, String bucketRegion, String keyPrefix, String rootObject, String includes, String excludes, Boolean overwriteExistingFile) {
         this.bucketName = bucketName;
+        this.bucketRegion = bucketRegion;
         this.keyPrefix = keyPrefix;
         this.rootObject = rootObject;
         this.overwriteExistingFile = overwriteExistingFile == null ? false : overwriteExistingFile;
@@ -29,6 +30,15 @@ public class AWSEBS3Setup extends AWSEBSetup {
 
     public String getBucketName() {
         return bucketName;
+    }
+
+    /**
+     * Bucket Region
+     */
+    private final String bucketRegion;
+
+    public String getBucketRegion() {
+        return bucketRegion;
     }
 
     /**
