@@ -21,7 +21,14 @@
         <option value=""></option>
         <j:invokeStatic className="com.amazonaws.regions.Regions" method="values" var="regionsAvailable" />
         <j:forEach items="${regionsAvailable}"  var="rgs">
-            <option value="${rgs.getName()}">${rgs.getName()}</option>
+            <j:choose>
+                <j:when test="${instance.bucketRegion.equals(rgs.getName())}">
+                    <option value="${rgs.getName()}" selected="selected">${rgs.getName()}</option>
+                </j:when>
+                <j:otherwise>
+                    <option value="${rgs.getName()}">${rgs.getName()}</option>
+                </j:otherwise>
+            </j:choose>
         </j:forEach>
       </select>
   </f:entry>
