@@ -27,7 +27,7 @@ public abstract class AWSEBPublisherBackwardsCompatibility  extends Recorder {
             if (isNotBlank(applicationName) || (environments != null && environments.size() > 0) || isNotBlank(versionLabelFormat)) {
                 List<AWSEBSetup> s3Setup = new ArrayList<AWSEBSetup>(2);
                 if (isNotBlank(bucketName) || isNotBlank(keyPrefix)) {
-                    s3Setup.add(new AWSEBS3Setup(bucketName, keyPrefix, 
+                    s3Setup.add(new AWSEBS3Setup(bucketName, awsRegion.getName(), keyPrefix,
                             rootObject, includes, excludes, overwriteExistingFile));
                     bucketName = null;
                     keyPrefix = null;
