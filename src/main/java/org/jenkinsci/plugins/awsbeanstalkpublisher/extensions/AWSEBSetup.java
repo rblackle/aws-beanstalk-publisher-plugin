@@ -18,7 +18,9 @@ public abstract class AWSEBSetup extends AbstractDescribableImpl<AWSEBSetup> {
         boolean status = true;
         try {
             for (AWSEBSetup eb : extensions) {
-                status &= eb.perform(build, launcher, listener);
+                if (eb != null) {
+                    status &= eb.perform(build, launcher, listener);
+                }
             }
             return status;
         } catch (Exception exc) {
