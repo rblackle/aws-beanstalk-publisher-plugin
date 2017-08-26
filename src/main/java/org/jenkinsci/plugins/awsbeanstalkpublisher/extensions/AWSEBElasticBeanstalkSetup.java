@@ -247,7 +247,7 @@ public class AWSEBElasticBeanstalkSetup extends AWSEBSetup {
 
         public List<AWSEBSetupDescriptor> getExtensionDescriptors() {
             List<AWSEBSetupDescriptor> extensions = new ArrayList<AWSEBSetupDescriptor>(1);
-            extensions.add(AWSEBS3Setup.getDesc());
+            extensions.add(AWSEBS3Setup.DESCRIPTOR);
             return extensions;
         }
         

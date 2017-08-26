@@ -13,7 +13,7 @@ public class AWSEBS3Setup extends AWSEBSetup {
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
     @DataBoundConstructor
-    public AWSEBS3Setup(String bucketName, String bucketRegion, String keyPrefix, String rootObject, String includes, String excludes, Boolean overwriteExistingFile) {
+    public AWSEBS3Setup(final String bucketName, final String bucketRegion, final String keyPrefix, final String rootObject, final String includes, final String excludes, final Boolean overwriteExistingFile, final Boolean useTransferAcceleration) {
         this.bucketName = bucketName;
         this.bucketRegion = bucketRegion;
         this.keyPrefix = keyPrefix;
@@ -21,6 +21,7 @@ public class AWSEBS3Setup extends AWSEBSetup {
         this.overwriteExistingFile = overwriteExistingFile == null ? false : overwriteExistingFile;
         this.includes = includes;
         this.excludes = excludes;
+        this.useTransferAcceleration = useTransferAcceleration ==null ? false:useTransferAcceleration;
     }
 
     /**
@@ -68,10 +69,16 @@ public class AWSEBS3Setup extends AWSEBSetup {
         return excludes;
     }
 
-    private final Boolean overwriteExistingFile;
+    private final boolean overwriteExistingFile;
+
+    private final boolean useTransferAcceleration;
 
     public boolean isOverwriteExistingFile() {
-        return (overwriteExistingFile == null ? false : overwriteExistingFile);
+        return overwriteExistingFile;
+    }
+
+    public boolean isUseTransferAcceleration() {
+        return useTransferAcceleration;
     }
 
     // Overridden for better type safety.
@@ -79,10 +86,6 @@ public class AWSEBS3Setup extends AWSEBSetup {
     // you don't have to do this.
     @Override
     public DescriptorImpl getDescriptor() {
-        return DESCRIPTOR;
-    }
-    
-    public static DescriptorImpl getDesc() {
         return DESCRIPTOR;
     }
 
@@ -94,8 +97,8 @@ public class AWSEBS3Setup extends AWSEBSetup {
         }
 
         public List<AWSEBSetupDescriptor> getExtensionDescriptors() {
-            List<AWSEBSetupDescriptor> extensions = new ArrayList<AWSEBSetupDescriptor>(1);
-            extensions.add(AWSEBS3Setup.getDesc());
+            final List<AWSEBSetupDescriptor> extensions = new ArrayList<AWSEBSetupDescriptor>(1);
+            extensions.add(AWSEBS3Setup.DESCRIPTOR);
             return extensions;
         }
     }
