@@ -45,9 +45,9 @@ public class AWSEBS3Uploader {
     private String s3ObjectPath;
     private AmazonS3 s3;
 
-    private AWSEBS3Uploader(final AbstractBuild<?, ?> build, final BuildListener listener, final Regions awsRegion,
-                            final AWSEBCredentials credentials, final AWSEBS3Setup s3Setup,
-                            final String applicationName, final String versionLabel) {
+    public AWSEBS3Uploader(AbstractBuild<?, ?> build, BuildListener listener, Regions awsRegion,
+            AWSEBCredentials credentials, AWSEBS3Setup s3Setup,
+            String applicationName, String versionLabel) {
         this.credentials = credentials;
         this.build = build;
         this.awsRegion = awsRegion;
@@ -65,12 +65,12 @@ public class AWSEBS3Uploader {
     }
 
 
-    public AWSEBS3Uploader(final AbstractBuild<?, ?> build, final BuildListener listener, final AWSEBElasticBeanstalkSetup envSetup, final AWSEBS3Setup s3) {
+    public AWSEBS3Uploader(AbstractBuild<?, ?> build, BuildListener listener, AWSEBElasticBeanstalkSetup envSetup, AWSEBS3Setup s3) {
         this(build, listener, envSetup.getAwsRegion(build, listener), envSetup.getActualcredentials(build, listener), s3, envSetup.getApplicationName(), envSetup.getVersionLabelFormat());
     }
 
 
-    public void uploadArchive(final AWSElasticBeanstalk awseb) throws Exception {
+    public void uploadArchive(AWSElasticBeanstalk awseb) throws Exception {
         if (s3 == null) {
             // Check whether we should use the env region or the bucket one.
             if(this.bucketRegion.isEmpty())
@@ -82,24 +82,23 @@ public class AWSEBS3Uploader {
         objectKey = AWSEBUtils.formatPath("%s/%s-%s.zip", keyPrefix, applicationName, versionLabel);
 
         s3ObjectPath = "s3://" + AWSEBUtils.formatPath("%s/%s", bucketName, objectKey);
-        final FilePath rootFileObject = new FilePath(build.getWorkspace(), AWSEBUtils.getValue(build, listener, rootObject));
-        final File localArchive = getLocalFileObject(rootFileObject);
+        FilePath rootFileObject = new FilePath(build.getWorkspace(), AWSEBUtils.getValue(build, listener, rootObject));
+        File localArchive = getLocalFileObject(rootFileObject);
 
         AWSEBUtils.log(listener, "Uploading file %s as %s", localArchive.getName(), s3ObjectPath);
 
         boolean uploadFile = true;
 
         try {
-            final ObjectMetadata meta = s3.getObjectMetadata(bucketName, objectKey);
-            final String awsMd5 = meta.getContentMD5();
-            final FileInputStream fis = new FileInputStream(localArchive);
-            final String ourMd5 = DigestUtils.md5Hex(fis);
+            ObjectMetadata meta = s3.getObjectMetadata(bucketName, objectKey);
+            String awsMd5 = meta.getContentMD5();
+            FileInputStream fis = new FileInputStream(localArchive);
+            String ourMd5 = DigestUtils.md5Hex(fis);
             fis.close();
             if (ourMd5.equals(awsMd5)) {
-                uploadFile = isOverwriteExistingFile;
+                uploadFile = false || isOverwriteExistingFile;
             }
-        }
-        catch (final AmazonS3Exception s3e) {
+        } catch (AmazonS3Exception s3e) {
             if (s3e.getStatusCode() == 403 || s3e.getStatusCode() == 404) {
                 // i.e. 404: NoSuchKey - The specified key does not exist
                 // 403: PermissionDenied is a sneaky way to hide that the file doesn't exist
@@ -107,11 +106,9 @@ public class AWSEBS3Uploader {
             } else {
                 throw s3e;
             }
-        }
-        catch (final FileNotFoundException e) {
+        } catch (FileNotFoundException e) {
             e.printStackTrace(listener.getLogger());
-        }
-        catch (final IOException e) {
+        } catch (IOException e) {
             e.printStackTrace(listener.getLogger());
         }
 
@@ -138,12 +135,12 @@ public class AWSEBS3Uploader {
     }
 
     @VisibleForTesting
-    void setS3(final AmazonS3 s3) {
+    void setS3(AmazonS3 s3) {
         this.s3 = s3;
     }
 
-    private File getLocalFileObject(final FilePath rootFileObject) throws Exception {
-        final File resultFile = File.createTempFile("awseb-", ".zip");
+    private File getLocalFileObject(FilePath rootFileObject) throws Exception {
+        File resultFile = File.createTempFile("awseb-", ".zip");
 
         if (!rootFileObject.isDirectory()) {
             AWSEBUtils.log(listener, "Root File Object is a file. We assume its a zip file, which is okay.");
@@ -158,10 +155,10 @@ public class AWSEBS3Uploader {
         return resultFile;
     }
 
-    private void createApplicationVersion(final AWSElasticBeanstalk awseb) {
+    private void createApplicationVersion(AWSElasticBeanstalk awseb) {
         AWSEBUtils.log(listener, "Creating application version %s for application %s for path %s", versionLabel, applicationName, s3ObjectPath);
 
-        final CreateApplicationVersionRequest cavRequest = new CreateApplicationVersionRequest().withApplicationName(applicationName).withAutoCreateApplication(true)
+        CreateApplicationVersionRequest cavRequest = new CreateApplicationVersionRequest().withApplicationName(applicationName).withAutoCreateApplication(true)
                 .withSourceBundle(new S3Location(bucketName, objectKey)).withVersionLabel(versionLabel);
 
         awseb.createApplicationVersion(cavRequest);

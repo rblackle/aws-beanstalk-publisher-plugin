@@ -13,7 +13,7 @@ public class AWSEBS3Setup extends AWSEBSetup {
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
     @DataBoundConstructor
-    public AWSEBS3Setup(final String bucketName, final String bucketRegion, final String keyPrefix, final String rootObject, final String includes, final String excludes, final Boolean overwriteExistingFile, final Boolean useTransferAcceleration) {
+    public AWSEBS3Setup(String bucketName, String bucketRegion, String keyPrefix, String rootObject, String includes, String excludes, Boolean overwriteExistingFile, Boolean useTransferAcceleration) {
         this.bucketName = bucketName;
         this.bucketRegion = bucketRegion;
         this.keyPrefix = keyPrefix;
@@ -69,16 +69,16 @@ public class AWSEBS3Setup extends AWSEBSetup {
         return excludes;
     }
 
-    private final boolean overwriteExistingFile;
-
-    private final boolean useTransferAcceleration;
+    private final Boolean overwriteExistingFile;
 
     public boolean isOverwriteExistingFile() {
-        return overwriteExistingFile;
+        return (overwriteExistingFile == null ? false : overwriteExistingFile);
     }
 
-    public boolean isUseTransferAcceleration() {
-        return useTransferAcceleration;
+    private final Boolean useTransferAcceleration;
+
+    public Boolean isUseTransferAcceleration() {
+        return useTransferAcceleration == null ? false : useTransferAcceleration;
     }
 
     // Overridden for better type safety.
@@ -88,6 +88,8 @@ public class AWSEBS3Setup extends AWSEBSetup {
     public DescriptorImpl getDescriptor() {
         return DESCRIPTOR;
     }
+
+
 
     @Extension
     public static class DescriptorImpl extends AWSEBSetupDescriptor {

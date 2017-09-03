@@ -11,6 +11,7 @@ import org.jenkinsci.plugins.awsbeanstalkpublisher.extensions.AWSEBSetup;
 import org.jenkinsci.plugins.awsbeanstalkpublisher.extensions.AWSEBSetupDescriptor;
 import org.jenkinsci.plugins.awsbeanstalkpublisher.extensions.envlookup.ByName;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,27 +25,37 @@ public abstract class AWSEBBuilderBackwardsCompatibility extends Builder impleme
     protected transient Boolean useTransferAcceleration;
 
     protected void readBackExtensionsFromLegacy() {
-        if (isNotBlank(applicationName) || (environments != null && environments.size() > 0) || isNotBlank(versionLabelFormat)) {
-            final List<AWSEBSetup> s3Setup = new ArrayList<AWSEBSetup>(1);
-            if (isNotBlank(bucketName) || isNotBlank(keyPrefix)) {
-                s3Setup.add(new AWSEBS3Setup(bucketName, awsRegion.getName(), keyPrefix,
-                        rootObject, includes, excludes, overwriteExistingFile, useTransferAcceleration));
-                bucketName = null;
-                keyPrefix = null;
-                rootObject = null;
-                includes = null;
-                excludes = null;
+        try {
+            if (isNotBlank(applicationName) || (environments != null && environments.size() > 0) || isNotBlank(versionLabelFormat)) {
+                List<AWSEBSetup> s3Setup = new ArrayList<AWSEBSetup>(1);
+                if (isNotBlank(bucketName) || isNotBlank(keyPrefix)) {
+                    s3Setup.add(new AWSEBS3Setup(bucketName, awsRegion.getName(), keyPrefix,
+                            rootObject, includes, excludes, overwriteExistingFile, useTransferAcceleration));
+                    bucketName = null;
+                    keyPrefix = null;
+                    rootObject = null;
+                    includes = null;
+                    excludes = null;
+                }
+                String credentialsName = "";
+                if (credentials != null ){
+                    credentialsName = credentials.getDisplayName();
+                }
+                List<AWSEBSetup> envLookup = new ArrayList<AWSEBSetup>(2);
+                ByName byName = new ByName(StringUtils.join(environments, '\n'));
+                envLookup.add(byName);
+                addIfMissing(new AWSEBElasticBeanstalkSetup(awsRegion, "", credentialsName, "",
+                        applicationName,
+                        versionLabelFormat, failOnError, s3Setup, envLookup));
             }
-            String credentialsName = "";
-            if (credentials != null ){
-                credentialsName = credentials.getDisplayName();
-            }
-            final List<AWSEBSetup> envLookup = new ArrayList<AWSEBSetup>(2);
-            final ByName byName = new ByName(StringUtils.join(environments, '\n'));
-            envLookup.add(byName);
-            addIfMissing(new AWSEBElasticBeanstalkSetup(awsRegion, "", credentialsName, "",
-                    applicationName,
-                    versionLabelFormat, failOnError, s3Setup, envLookup));
+
+        } catch (IOException e) {
+            throw new AssertionError(e); // since our extensions don't have any real Saveable
+        }
+    }
+    protected void addIfMissing(AWSEBSetup ext) throws IOException {
+        if (getExtensions().get(ext.getClass()) == null) {
+            getExtensions().add(ext);
         }
     }
     
@@ -83,12 +94,6 @@ public abstract class AWSEBBuilderBackwardsCompatibility extends Builder impleme
 
     @Deprecated
     protected transient Boolean overwriteExistingFile;
-
-    private void addIfMissing(final AWSEBSetup ext) {
-        if (getExtensions().get(ext.getClass()) == null) {
-            getExtensions().add(ext);
-        }
-    }
 
 
     @Deprecated
