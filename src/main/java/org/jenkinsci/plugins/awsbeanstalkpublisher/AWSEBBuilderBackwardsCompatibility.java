@@ -1,9 +1,9 @@
 package org.jenkinsci.plugins.awsbeanstalkpublisher;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.amazonaws.regions.Regions;
+import hudson.tasks.BuildStep;
+import hudson.tasks.Builder;
+import hudson.util.DescribableList;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.awsbeanstalkpublisher.extensions.AWSEBElasticBeanstalkSetup;
 import org.jenkinsci.plugins.awsbeanstalkpublisher.extensions.AWSEBS3Setup;
@@ -11,16 +11,18 @@ import org.jenkinsci.plugins.awsbeanstalkpublisher.extensions.AWSEBSetup;
 import org.jenkinsci.plugins.awsbeanstalkpublisher.extensions.AWSEBSetupDescriptor;
 import org.jenkinsci.plugins.awsbeanstalkpublisher.extensions.envlookup.ByName;
 
-import com.amazonaws.regions.Regions;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-import hudson.tasks.BuildStep;
-import hudson.tasks.Builder;
-import hudson.util.DescribableList;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 public abstract class AWSEBBuilderBackwardsCompatibility extends Builder implements BuildStep {
 
     abstract DescribableList<AWSEBSetup, AWSEBSetupDescriptor> getExtensions();
+
+    @Deprecated
+    protected transient Boolean useTransferAcceleration;
 
     protected void readBackExtensionsFromLegacy() {
         try {
@@ -28,7 +30,7 @@ public abstract class AWSEBBuilderBackwardsCompatibility extends Builder impleme
                 List<AWSEBSetup> s3Setup = new ArrayList<AWSEBSetup>(1);
                 if (isNotBlank(bucketName) || isNotBlank(keyPrefix)) {
                     s3Setup.add(new AWSEBS3Setup(bucketName, awsRegion.getName(), keyPrefix,
-                            rootObject, includes, excludes, overwriteExistingFile));
+                            rootObject, includes, excludes, overwriteExistingFile, useTransferAcceleration));
                     bucketName = null;
                     keyPrefix = null;
                     rootObject = null;
@@ -42,8 +44,8 @@ public abstract class AWSEBBuilderBackwardsCompatibility extends Builder impleme
                 List<AWSEBSetup> envLookup = new ArrayList<AWSEBSetup>(2);
                 ByName byName = new ByName(StringUtils.join(environments, '\n'));
                 envLookup.add(byName);
-                addIfMissing(new AWSEBElasticBeanstalkSetup(awsRegion, "", credentialsName, "", 
-                        applicationName, 
+                addIfMissing(new AWSEBElasticBeanstalkSetup(awsRegion, "", credentialsName, "",
+                        applicationName,
                         versionLabelFormat, failOnError, s3Setup, envLookup));
             }
 

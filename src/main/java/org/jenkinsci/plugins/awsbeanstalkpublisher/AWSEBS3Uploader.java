@@ -1,28 +1,25 @@
 package org.jenkinsci.plugins.awsbeanstalkpublisher;
 
-import hudson.FilePath;
-import hudson.model.BuildListener;
-import hudson.model.AbstractBuild;
-import hudson.util.DirScanner;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-
-import org.apache.commons.codec.digest.DigestUtils;
-import org.jenkinsci.plugins.awsbeanstalkpublisher.extensions.AWSEBElasticBeanstalkSetup;
-import org.jenkinsci.plugins.awsbeanstalkpublisher.extensions.AWSEBS3Setup;
-
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.elasticbeanstalk.AWSElasticBeanstalk;
 import com.amazonaws.services.elasticbeanstalk.model.CreateApplicationVersionRequest;
 import com.amazonaws.services.elasticbeanstalk.model.S3Location;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.S3ClientOptions;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.GetBucketAccelerateConfigurationRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Stopwatch;
+import hudson.FilePath;
+import hudson.model.AbstractBuild;
+import hudson.model.BuildListener;
+import hudson.util.DirScanner;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.jenkinsci.plugins.awsbeanstalkpublisher.extensions.AWSEBElasticBeanstalkSetup;
+import org.jenkinsci.plugins.awsbeanstalkpublisher.extensions.AWSEBS3Setup;
+
+import java.io.*;
 
 public class AWSEBS3Uploader {
 
@@ -34,6 +31,7 @@ public class AWSEBS3Uploader {
     private final String excludes;
     private final String rootObject;
     private final boolean isOverwriteExistingFile;
+    private final boolean useTransferAcceleration;
     
     private final String applicationName;
     private final String versionLabel;
@@ -46,8 +44,8 @@ public class AWSEBS3Uploader {
     private String objectKey;
     private String s3ObjectPath;
     private AmazonS3 s3;
-    
-    public AWSEBS3Uploader(AbstractBuild<?, ?> build, BuildListener listener, Regions awsRegion, 
+
+    public AWSEBS3Uploader(AbstractBuild<?, ?> build, BuildListener listener, Regions awsRegion,
             AWSEBCredentials credentials, AWSEBS3Setup s3Setup,
             String applicationName, String versionLabel) {
         this.credentials = credentials;
@@ -63,8 +61,9 @@ public class AWSEBS3Uploader {
         this.excludes = AWSEBUtils.getValue(build, listener, s3Setup.getExcludes());
         this.rootObject = AWSEBUtils.getValue(build, listener, s3Setup.getRootObject());
         this.isOverwriteExistingFile = s3Setup.isOverwriteExistingFile();
+        this.useTransferAcceleration = s3Setup.isUseTransferAcceleration();
     }
-    
+
 
     public AWSEBS3Uploader(AbstractBuild<?, ?> build, BuildListener listener, AWSEBElasticBeanstalkSetup envSetup, AWSEBS3Setup s3) {
         this(build, listener, envSetup.getAwsRegion(build, listener), envSetup.getActualcredentials(build, listener), s3, envSetup.getApplicationName(), envSetup.getVersionLabelFormat());
@@ -113,8 +112,23 @@ public class AWSEBS3Uploader {
             e.printStackTrace(listener.getLogger());
         }
 
+        //see if the bucket is enabled for Acceleration:
+        if (useTransferAcceleration) {
+            if (s3.getBucketAccelerateConfiguration(new GetBucketAccelerateConfigurationRequest(bucketName)).isAccelerateEnabled()) {
+                s3.setS3ClientOptions(S3ClientOptions.builder().setAccelerateModeEnabled(true).build());
+                AWSEBUtils.log(listener, "Bucket %s configured for Transfer Acceleration!", bucketName);
+            }
+            else {
+                AWSEBUtils.log(listener, "Bucket %s does not support Transfer Acceleration", bucketName);
+            }
+        }
+
         if (uploadFile) {
+            final Stopwatch sw = new Stopwatch();
+            sw.start();
             s3.putObject(bucketName, objectKey, localArchive);
+            sw.stop();
+            AWSEBUtils.log(listener, "Upload took " + sw.toString());
         }
         localArchive.delete();
         createApplicationVersion(awseb);
@@ -140,8 +154,8 @@ public class AWSEBS3Uploader {
 
         return resultFile;
     }
-    
-    public void createApplicationVersion(AWSElasticBeanstalk awseb) {
+
+    private void createApplicationVersion(AWSElasticBeanstalk awseb) {
         AWSEBUtils.log(listener, "Creating application version %s for application %s for path %s", versionLabel, applicationName, s3ObjectPath);
 
         CreateApplicationVersionRequest cavRequest = new CreateApplicationVersionRequest().withApplicationName(applicationName).withAutoCreateApplication(true)

@@ -28,7 +28,7 @@ public abstract class AWSEBPublisherBackwardsCompatibility  extends Recorder {
                 List<AWSEBSetup> s3Setup = new ArrayList<AWSEBSetup>(2);
                 if (isNotBlank(bucketName) || isNotBlank(keyPrefix)) {
                     s3Setup.add(new AWSEBS3Setup(bucketName, awsRegion.getName(), keyPrefix,
-                            rootObject, includes, excludes, overwriteExistingFile));
+                            rootObject, includes, excludes, overwriteExistingFile, useTransferAcceleration));
                     bucketName = null;
                     keyPrefix = null;
                     rootObject = null;
@@ -42,8 +42,8 @@ public abstract class AWSEBPublisherBackwardsCompatibility  extends Recorder {
                 List<AWSEBSetup> envLookup = new ArrayList<AWSEBSetup>(2);
                 ByName byName = new ByName(StringUtils.join(environments, '\n'));
                 envLookup.add(byName);
-                addIfMissing(new AWSEBElasticBeanstalkSetup(awsRegion, "", credentialsName, "", 
-                        applicationName, 
+                addIfMissing(new AWSEBElasticBeanstalkSetup(awsRegion, "", credentialsName, "",
+                        applicationName,
                         versionLabelFormat, failOnError, s3Setup, envLookup));
             }
 
@@ -93,6 +93,9 @@ public abstract class AWSEBPublisherBackwardsCompatibility  extends Recorder {
 
     @Deprecated
     protected transient Boolean overwriteExistingFile;
+
+    @Deprecated
+    protected transient Boolean useTransferAcceleration;
 
 
     @Deprecated
