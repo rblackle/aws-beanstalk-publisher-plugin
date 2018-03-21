@@ -32,6 +32,7 @@ public class AWSEBEnvironmentUpdater {
     
     private final String applicationName;
     private final String versionLabel;
+    private final String description;
     private final AWSElasticBeanstalk awseb;
     private final boolean failOnError;
     
@@ -45,7 +46,7 @@ public class AWSEBEnvironmentUpdater {
         applicationName = AWSEBUtils.getValue(build, listener,envSetup.getApplicationName());
         versionLabel = AWSEBUtils.getValue(build, listener,envSetup.getVersionLabelFormat());
         failOnError = envSetup.getFailOnError();
-        
+        description = AWSEBUtils.replaceMacros(build, listener, envSetup.getDescriptionFormat());
 
         AWSEBCredentials credentials = envSetup.getActualcredentials(build, listener);
         AWSCredentialsProvider provider = null;
@@ -98,9 +99,9 @@ public class AWSEBEnvironmentUpdater {
         List<AWSEBEnvironmentUpdaterThread> updaters = new ArrayList<AWSEBEnvironmentUpdaterThread>();
         for (EnvironmentDescription envd : envList) {
             AWSEBUtils.log(listener, "Environment found (environment id='%s', name='%s'). "
-                    + "Attempting to update environment to version label '%s'", 
-                    envd.getEnvironmentId(), envd.getEnvironmentName(), versionLabel);
-            updaters.add(new AWSEBEnvironmentUpdaterThread(awseb, envd, listener, versionLabel));
+                    + "Attempting to update environment to version label '%s' with description '%s'",
+                    envd.getEnvironmentId(), envd.getEnvironmentName(), versionLabel, description);
+            updaters.add(new AWSEBEnvironmentUpdaterThread(awseb, envd, listener, versionLabel, description));
         }
         List<Future<AWSEBEnvironmentUpdaterThread>> results = pool.invokeAll(updaters);
 

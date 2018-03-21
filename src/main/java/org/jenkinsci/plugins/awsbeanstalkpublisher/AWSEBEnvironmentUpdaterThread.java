@@ -30,6 +30,7 @@ public class AWSEBEnvironmentUpdaterThread implements Callable<AWSEBEnvironmentU
     private final String environmentId;
     private final BuildListener listener;
     private final String versionLabel;
+    private final String description;
 
     private boolean isUpdated = false;
     private boolean isComplete = false;
@@ -37,11 +38,12 @@ public class AWSEBEnvironmentUpdaterThread implements Callable<AWSEBEnvironmentU
     private int nAttempt;
     private EventDescription lastEvent;
 
-    public AWSEBEnvironmentUpdaterThread(AWSElasticBeanstalk awseb, EnvironmentDescription envd, BuildListener listener, String versionLabel) {
+    public AWSEBEnvironmentUpdaterThread(AWSElasticBeanstalk awseb, EnvironmentDescription envd, BuildListener listener, String versionLabel, String description) {
         this.awseb = awseb;
         this.envd = envd;
         this.listener = listener;
         this.versionLabel = versionLabel;
+        this.description = description;
         this.lastEvent = new EventDescription();
         lastEvent.setEventDate(new Date());
         
@@ -74,7 +76,10 @@ public class AWSEBEnvironmentUpdaterThread implements Callable<AWSEBEnvironmentU
         log("'%s': Attempt %d/%d", envd.getEnvironmentName(), nAttempt, MAX_ATTEMPTS);
         
         
-        UpdateEnvironmentRequest uavReq = new UpdateEnvironmentRequest().withEnvironmentId(environmentId).withVersionLabel(versionLabel);
+        UpdateEnvironmentRequest uavReq = new UpdateEnvironmentRequest()
+                                              .withEnvironmentId(environmentId)
+                                              .withVersionLabel(versionLabel)
+                                              .withDescription(description);
         isUpdated = true;
         
 

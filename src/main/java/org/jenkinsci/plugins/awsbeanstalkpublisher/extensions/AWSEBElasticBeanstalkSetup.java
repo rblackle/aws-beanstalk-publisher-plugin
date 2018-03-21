@@ -36,6 +36,7 @@ public class AWSEBElasticBeanstalkSetup extends AWSEBSetup {
     private Regions awsRegion;
     private String applicationName;
     private String versionLabelFormat;
+    private String descriptionFormat;
     private Boolean failOnError;
 
     @Deprecated
@@ -56,6 +57,7 @@ public class AWSEBElasticBeanstalkSetup extends AWSEBSetup {
             String credentialsText,
             String applicationName, 
             String versionLabelFormat, 
+            String descriptionFormat,
             Boolean failOnError,
             List<AWSEBSetup> extensions,
             List<AWSEBSetup> envLookup) {
@@ -67,6 +69,7 @@ public class AWSEBElasticBeanstalkSetup extends AWSEBSetup {
         this.applicationName = applicationName;
 
         this.versionLabelFormat = versionLabelFormat;
+        this.descriptionFormat = descriptionFormat;
         this.failOnError = failOnError;
         this.extensions = new DescribableList<AWSEBSetup, AWSEBSetupDescriptor>(Saveable.NOOP, Util.fixNull(extensions));
         
@@ -137,6 +140,10 @@ public class AWSEBElasticBeanstalkSetup extends AWSEBSetup {
 
     public String getVersionLabelFormat() {
         return versionLabelFormat == null ? "" : versionLabelFormat;
+    }
+
+    public String getDescriptionFormat() {
+        return descriptionFormat == null ? "" : descriptionFormat;
     }
 
     public Boolean getFailOnError() {
